@@ -10,7 +10,8 @@ from rest_framework import status
 from .serializers import PictureSerializer
 from .serializers import AlbumSerializer
 
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+
 from django.views.decorators.csrf import csrf_exempt
 
 import json
@@ -18,6 +19,8 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from .models import Album
 from .models import Picture
+from django.contrib.auth.models import User
+from .serializers import UserSerializer
 
 
 @api_view(["POST"])
@@ -82,40 +85,60 @@ def get_albums(request):
     return JsonResponse({'album': serializer.data}, safe=False, status=status.HTTP_200_OK)
 
 
-@api_view(['DELETE'])
-def delete_picture(request):
+@api_view(["GET"])
+@csrf_exempt
+@permission_classes([AllowAny])
+def get_public_albums(request):
+
+    album = Album.objects.filter(is_private=False)
+    serializer = AlbumSerializer(album, many=True)
+    return JsonResponse({'album': serializer.data}, safe=False, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@csrf_exempt
+@permission_classes([AllowAny])
+def get_public_album(request, pk):
+
+    album = Album.objects.filter(is_private=False, id=pk)
+    serializer = AlbumSerializer(album, many=True)
+    return JsonResponse({'album': serializer.data}, safe=False, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_auth(request):
+    payload = json.dumps(request.data)
+    payload = json.loads(payload)
+
+    user = User.objects.create_user(
+        email=payload["email"], username=payload["username"], password=payload["password"])
+    serializer = UserSerializer(user)
+    return JsonResponse({'user': serializer.data}, safe=False, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([AllowAny])
+def album_detail(request, pk):
+
     try:
-        picture = Picture.objects.get(picture=picture)
-    except:
-        Picture.ObjectDoesNotExist
+        album = Album.objects.get(pk=pk)
+    except Album.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == "DELETE":
-        serializer = PictureSerializer(picture, data=request.data)
-        data = {}
-        if operation:
-            data["success"] = "delete successful"
-        else:
-            data["failure"] = "delete failed"
-        return Response(data=data)
+    if request.method == 'GET':
+        serializer = AlbumSerializer(album)
+        return Response(serializer.data)
 
+    elif request.method == 'PUT':
+        serializer = AlbumSerializer(album, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['DELETE'])
-def delete_picture(request):
-    try:
-        album = Picture.objects.get(album = album)
-    except:
-        Album.ObjectDoesNotExist
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == "DELETE":
-        serializer = PictureSerializer(album, data=request.data)
-        data = {}
-        if operation:
-            data["success"] = "delete successful"
-        else:
-            data["failure"] = "delete failed"
-        return Response(data=data)
-
-
+    elif request.method == 'DELETE':
+        album.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 # Create your views here.
+
