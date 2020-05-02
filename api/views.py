@@ -19,6 +19,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import Album
 from .models import Picture
 
+
 @api_view(["POST"])
 @csrf_exempt
 @permission_classes([IsAuthenticated])
@@ -79,5 +80,42 @@ def get_albums(request):
     album = Album.objects.filter(creator=user)
     serializer = AlbumSerializer(album, many=True)
     return JsonResponse({'album': serializer.data}, safe=False, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+def delete_picture(request):
+    try:
+        picture = Picture.objects.get(picture=picture)
+    except:
+        Picture.ObjectDoesNotExist
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "DELETE":
+        serializer = PictureSerializer(picture, data=request.data)
+        data = {}
+        if operation:
+            data["success"] = "delete successful"
+        else:
+            data["failure"] = "delete failed"
+        return Response(data=data)
+
+
+@api_view(['DELETE'])
+def delete_picture(request):
+    try:
+        album = Picture.objects.get(album = album)
+    except:
+        Album.ObjectDoesNotExist
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "DELETE":
+        serializer = PictureSerializer(album, data=request.data)
+        data = {}
+        if operation:
+            data["success"] = "delete successful"
+        else:
+            data["failure"] = "delete failed"
+        return Response(data=data)
+
 
 # Create your views here.
