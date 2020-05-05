@@ -9,8 +9,8 @@ urlpatterns = [
     path('get_pictures/', views.get_pictures),
     path('register/', views.create_auth),
     path('album/<int:pk>', views.album_detail),
-    path('all_albums/', views.get_public_albums),
     path('show_album/<int:pk>', views.get_public_album),
+    # path('all_albums/', views.get_public_albums),
 
 
 

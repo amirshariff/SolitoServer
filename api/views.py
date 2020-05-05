@@ -33,7 +33,7 @@ def add_album(request):
     try:
         album = Album.objects.create(
             album_name=payload["album_name"],
-            album_description=payload["album_description"],
+            # album_description=payload["album_description"],
             creator=user,
 
         )
@@ -46,7 +46,14 @@ def add_album(request):
 
 
 class FileUploadView(APIView):
+
+
+    
+
+
     parser_class = (FileUploadParser,)
+    @permission_classes([AllowAny])
+
 
     def post(self, request, *args, **kwargs):
         albums = Album.objects.get(album_name=request.data['album_name'])
@@ -85,14 +92,14 @@ def get_albums(request):
     return JsonResponse({'album': serializer.data}, safe=False, status=status.HTTP_200_OK)
 
 
-@api_view(["GET"])
-@csrf_exempt
-@permission_classes([AllowAny])
-def get_public_albums(request):
+# @api_view(["GET"])
+# @csrf_exempt
+# @permission_classes([AllowAny])
+# def get_public_albums(request):
 
-    album = Album.objects.filter(is_private=False)
-    serializer = AlbumSerializer(album, many=True)
-    return JsonResponse({'album': serializer.data}, safe=False, status=status.HTTP_200_OK)
+#     album = Album.objects.filter(is_private=False)
+#     serializer = AlbumSerializer(album, many=True)
+#     return JsonResponse({'album': serializer.data}, safe=False, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -107,6 +114,7 @@ def get_public_album(request, pk):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+
 def create_auth(request):
     payload = json.dumps(request.data)
     payload = json.loads(payload)
@@ -118,7 +126,7 @@ def create_auth(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def album_detail(request, pk):
 
     try:
@@ -140,5 +148,13 @@ def album_detail(request, pk):
     elif request.method == 'DELETE':
         album.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# @api_view(['DELETE'])
+# @permission_classes([IsAuthenticated])
+# def picture_delete(request, pk):
+#     picture.delete()
+#     return Response(status=status.HTTP_204_NO_CONTENT)
+
 # Create your views here.
 
