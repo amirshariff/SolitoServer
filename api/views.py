@@ -21,6 +21,14 @@ from .models import Album
 from .models import Picture
 from django.contrib.auth.models import User
 from .serializers import UserSerializer
+from .serializers import AlbumDetailsSerializer
+
+
+@api_view(['GET'])
+def current_user(request):
+    user = request.user
+    serializer = UserSerializer(user)
+    return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -38,7 +46,7 @@ def add_album(request):
 
         )
         serializer = AlbumSerializer(album)
-        return JsonResponse({'books': serializer.data}, safe=False, status=status.HTTP_201_CREATED)
+        return JsonResponse(serializer.data, safe=False, status=status.HTTP_201_CREATED)
     except ObjectDoesNotExist as e:
         return JsonResponse({'error': str(e)}, safe=False, status=status.HTTP_404_NOT_FOUND)
     except Exception:
@@ -47,20 +55,14 @@ def add_album(request):
 
 class FileUploadView(APIView):
 
-
-    
-
-
     parser_class = (FileUploadParser,)
     @permission_classes([AllowAny])
-
-
     def post(self, request, *args, **kwargs):
-        albums = Album.objects.get(album_name=request.data['album_name'])
+        album = Album.objects.get(id=request.data['album_id'])
         file_serializer = PictureSerializer(data=request.data)
 
         if file_serializer.is_valid():
-            file_serializer.save(albums=albums)
+            file_serializer.save(albums=(album))
             return Response(file_serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -114,7 +116,6 @@ def get_public_album(request, pk):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-
 def create_auth(request):
     payload = json.dumps(request.data)
     payload = json.loads(payload)
@@ -126,7 +127,7 @@ def create_auth(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def album_detail(request, pk):
 
     try:
@@ -135,7 +136,7 @@ def album_detail(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = AlbumSerializer(album)
+        serializer = AlbumDetailsSerializer(album)
         return Response(serializer.data)
 
     elif request.method == 'PUT':
@@ -150,11 +151,21 @@ def album_detail(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# @api_view(['DELETE'])
-# @permission_classes([IsAuthenticated])
-# def picture_delete(request, pk):
-#     picture.delete()
-#     return Response(status=status.HTTP_204_NO_CONTENT)
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def album_delete(request, pk):
+    album = Album.objects.get(pk=pk)
+    serializer = AlbumSerializer(album)
+    album.delete()
+    return JsonResponse(serializer.data, safe=False, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def picture_delete(request, pk):
+    picture = Picture.objects.get(pk=pk)
+
+    picture.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 # Create your views here.
-

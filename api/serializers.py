@@ -15,7 +15,15 @@ class AlbumSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AlbumDetailsSerializer(serializers.ModelSerializer):
+    pictures = PictureSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Album
+        fields = ("id", "album_name", "creator", "pictures")
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('email', 'password','username')
+        fields = ('email', 'password', 'username','id')
