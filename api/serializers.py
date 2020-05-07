@@ -20,10 +20,10 @@ class AlbumDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Album
-        fields = ("id", "album_name", "creator", "pictures")
+        fields = ("id", "album_name", "creator", "is_private", "pictures")
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('email', 'password', 'username','id')
+        fields = ('email', 'password', 'username', 'id')

@@ -126,7 +126,7 @@ def create_auth(request):
     return JsonResponse({'user': serializer.data}, safe=False, status=status.HTTP_201_CREATED)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET', 'PATCH', 'DELETE'])
 @permission_classes([AllowAny])
 def album_detail(request, pk):
 
@@ -135,16 +135,18 @@ def album_detail(request, pk):
     except Album.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == 'GET':
+    if request.user != album.creator and album.is_private:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    elif request.method == 'GET':
         serializer = AlbumDetailsSerializer(album)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
-        serializer = AlbumSerializer(album, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'PATCH':
+        album.is_private = request.data['is_private']
+        album.save(update_fields=["is_private"])
+        serializer = AlbumDetailsSerializer(album)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == 'DELETE':
         album.delete()
