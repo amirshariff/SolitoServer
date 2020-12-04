@@ -1,0 +1,2 @@
+# SolitoServer
+Django api
